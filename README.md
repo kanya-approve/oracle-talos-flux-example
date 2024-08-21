@@ -4,7 +4,7 @@
 [![e2e](https://github.com/fluxcd/flux2-kustomize-helm-example/workflows/e2e/badge.svg)](https://github.com/fluxcd/flux2-kustomize-helm-example/actions)
 [![license](https://img.shields.io/github/license/fluxcd/flux2-kustomize-helm-example.svg)](https://github.com/fluxcd/flux2-kustomize-helm-example/blob/main/LICENSE)
 
-For this example we assume a scenario with two clusters: staging and production.
+For this example we assume a scenario with two clusters: staging and talos-cluster.
 The end goal is to leverage Flux and Kustomize to manage both clusters while minimizing duplicated declarations.
 
 We will configure Flux to install, test and upgrade a demo app using
@@ -51,7 +51,7 @@ The Git repository contains the following top directories:
 │   ├── configs
 │   └── controllers
 └── clusters
-    ├── production
+    ├── talos-cluster
     └── staging
 ```
 
@@ -60,7 +60,7 @@ The Git repository contains the following top directories:
 The apps configuration is structured into:
 
 - **apps/base/** dir contains namespaces and Helm release definitions
-- **apps/production/** dir contains the production Helm release values
+- **apps/production/** dir contains the talos-cluster Helm release values
 - **apps/staging/** dir contains the staging values
 
 ```
@@ -210,7 +210,7 @@ spec:
             class: nginx
 ```
 
-In **clusters/production/infrastructure.yaml** we replace the Let's Encrypt server value to point to the production API:
+In **clusters/talos-cluster/infrastructure.yaml** we replace the Let's Encrypt server value to point to the talos-cluster API:
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -235,13 +235,13 @@ spec:
 Note that with `dependsOn` we tell Flux to first install or upgrade the controllers and only then the configs.
 This ensures that the Kubernetes CRDs are registered on the cluster, before Flux applies any custom resources.
 
-## Bootstrap staging and production
+## Bootstrap staging and talos-cluster
 
 The clusters dir contains the Flux configuration:
 
 ```
 ./clusters/
-├── production
+├── talos-cluster
 │   ├── apps.yaml
 │   └── infrastructure.yaml
 └── staging
@@ -324,19 +324,19 @@ $ curl -H "Host: podinfo.staging" http://localhost:8080
 }
 ```
 
-Bootstrap Flux on production by setting the context and path to your production cluster:
+Bootstrap Flux on talos-cluster by setting the context and path to your talos cluster:
 
 ```sh
 flux bootstrap github \
-    --context=production \
+    --context=talos-cluster \
     --owner=${GITHUB_USER} \
     --repository=${GITHUB_REPO} \
     --branch=main \
     --personal \
-    --path=clusters/production
+    --path=clusters/talos-cluster
 ```
 
-Watch the production reconciliation:
+Watch the talos-cluster reconciliation:
 
 ```console
 $ flux get kustomizations --watch
@@ -394,18 +394,18 @@ flux bootstrap github \
 ## Identical environments
 
 If you want to spin up an identical environment, you can bootstrap a cluster
-e.g. `production-clone` and reuse the `production` definitions.
+e.g. `talos-cluster-clone` and reuse the `talos-cluster` definitions.
 
-Bootstrap the `production-clone` cluster:
+Bootstrap the `talos-cluster-clone` cluster:
 
 ```sh
 flux bootstrap github \
-    --context=production-clone \
+    --context=talos-cluster-clone \
     --owner=${GITHUB_USER} \
     --repository=${GITHUB_REPO} \
     --branch=main \
     --personal \
-    --path=clusters/production-clone
+    --path=clusters/talos-cluster-clone
 ```
 
 Pull the changes locally:
@@ -414,31 +414,31 @@ Pull the changes locally:
 git pull origin main
 ```
 
-Create a `kustomization.yaml` inside the `clusters/production-clone` dir:
+Create a `kustomization.yaml` inside the `clusters/talos-cluster-clone` dir:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - flux-system
-  - ../production/infrastructure.yaml
-  - ../production/apps.yaml
+  - ../talos-cluster/infrastructure.yaml
+  - ../talos-cluster/apps.yaml
 ```
 
 Note that besides the `flux-system` kustomize overlay, we also include
-the `infrastructure` and `apps` manifests from the production dir.
+the `infrastructure` and `apps` manifests from the talos-cluster dir.
 
 Push the changes to the main branch:
 
 ```sh
-git add -A && git commit -m "add production clone" && git push
+git add -A && git commit -m "add talos-cluster clone" && git push
 ```
 
-Tell Flux to deploy the production workloads on the `production-clone` cluster:
+Tell Flux to deploy the talos-cluster workloads on the `talos-cluster-clone` cluster:
 
 ```sh
 flux reconcile kustomization flux-system \
-    --context=production-clone \
+    --context=talos-cluster-clone \
     --with-source 
 ```
 
