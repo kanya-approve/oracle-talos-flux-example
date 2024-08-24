@@ -28,6 +28,7 @@ spec:
       allowCollectingLonghornUsageMetrics: false
       autoCleanupSnapshotWhenDeleteBackup: true
       backupCompressionMethod: gzip
+      backupTargetCredentialSecret: longhorn-backup-creds
       concurrentAutomaticEngineUpgradePerNodeLimit: 1
       defaultDataLocality: best-effort
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod

@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - longhorn-backup-creds.yaml
   - longhorn-backup-target.yaml
-  - longhorn-recurring-jobs.yaml
+  - longhorn-daily-backup.yaml
+  - longhorn-daily-filesystem-trim.yaml

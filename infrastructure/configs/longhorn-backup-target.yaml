@@ -5,10 +5,3 @@ metadata:
   name: backup-target
   namespace: kube-system
 value: s3://my-bucket
----
-apiVersion: longhorn.io/v1beta2
-kind: Setting
-metadata:
-  name: backup-target-credential-secret
-  namespace: kube-system
-value: longhorn-backup-creds
