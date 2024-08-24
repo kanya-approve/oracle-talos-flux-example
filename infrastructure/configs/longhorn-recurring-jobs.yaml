@@ -1,0 +1,23 @@
+---
+apiVersion: longhorn.io/v1beta1
+kind: RecurringJob
+metadata:
+  name: daily-backup
+spec:
+  concurrency: 2
+  cron: 0 0 * * *
+  groups:
+    - default
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta1
+kind: RecurringJob
+metadata:
+  name: daily-filesystem-trim
+spec:
+  concurrency: 2
+  cron: 30 0 * * *
+  groups:
+    - default
+  task: filesystem-trim

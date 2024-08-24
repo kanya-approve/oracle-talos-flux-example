@@ -40,19 +40,3 @@ spec:
       defaultDataLocality: best-effort
       nfsOptions: async,hard,nfsvers=4,noatime,proto=tcp,retrans=2,rsize=65536,timeo=600,wsize=65536
       reclaimPolicy: Delete
-      recurringJobSelector:
-        enable: true
-        jobList:
-          - concurrency: 2
-            cron: 0 0 * * * # Daily at midnight
-            groups:
-              - default
-            name: daily-backup
-            retain: 1
-            task: backup
-          - concurrency: 2
-            cron: 30 0 * * * # Daily at half past midnight
-            groups:
-              - default
-            name: daily-filesystem-trim
-            task: filesystem-trim
