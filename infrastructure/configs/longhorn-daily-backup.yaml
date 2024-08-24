@@ -6,7 +6,7 @@ metadata:
   namespace: kube-system
 spec:
   concurrency: 2
-  cron: 0 0 * * *
+  cron: 0 3 * * *
   groups:
     - default
   retain: 1
