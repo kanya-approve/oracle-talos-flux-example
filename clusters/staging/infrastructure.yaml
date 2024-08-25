@@ -12,7 +12,7 @@ spec:
           path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
           value: disabled
       target:
-        kind: DaemonSet
+        kind: Kustomization
         name: longhorn-nfs-installation
   path: ./infrastructure/controllers
   prune: true
