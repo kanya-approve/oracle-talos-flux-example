@@ -17,7 +17,7 @@ spec:
   patches:
     - patch: |
         - op: add
-          path: /metadata/annotations/kustomize.toolkit.fluxcd.io/reconcile
+          path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
           value: disabled
       target:
         kind: DaemonSet
