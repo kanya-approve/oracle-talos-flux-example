@@ -6,14 +6,6 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1h
-  patches:
-    - patch: |
-        - op: add
-          path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
-          value: disabled
-      target:
-        kind: Kustomization
-        name: longhorn-nfs-installation
   path: infrastructure/controllers
   prune: true
   retryInterval: 1m
