@@ -67,6 +67,7 @@ metadata:
   name: longhorn-nfs-installation
   namespace: longhorn-system
 spec:
+  force: true
   interval: 30m
   path: deploy/prerequisite
   prune: true
