@@ -14,7 +14,7 @@ spec:
       target:
         kind: Kustomization
         name: longhorn-nfs-installation
-  path: ./infrastructure/controllers
+  path: infrastructure/controllers
   prune: true
   retryInterval: 1m
   sourceRef:
@@ -32,7 +32,7 @@ spec:
   dependsOn:
     - name: infra-controllers
   interval: 1h
-  path: ./infrastructure/configs
+  path: infrastructure/configs
   prune: true
   retryInterval: 1m
   sourceRef:

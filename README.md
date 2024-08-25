@@ -264,12 +264,12 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/staging
+  path: apps/staging
   prune: true
   wait: true
 ```
 
-Note that with `path: ./apps/staging` we configure Flux to sync the staging Kustomize overlay and 
+Note that with `path: apps/staging` we configure Flux to sync the staging Kustomize overlay and 
 with `dependsOn` we tell Flux to create the infrastructure items before deploying the apps.
 
 Fork this repository on your personal GitHub account and export your GitHub access token, username and repo name:
@@ -371,7 +371,7 @@ cp clusters/staging/apps.yaml clusters/dev
 ```
 
 You could create a dev overlay inside `apps`, make sure
-to change the `spec.path` inside `clusters/dev/apps.yaml` to `path: ./apps/dev`. 
+to change the `spec.path` inside `clusters/dev/apps.yaml` to `path: apps/dev`. 
 
 Push the changes to the main branch:
 

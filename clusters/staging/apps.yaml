@@ -8,7 +8,7 @@ spec:
   dependsOn:
     - name: infra-configs
   interval: 10m
-  path: ./apps/staging
+  path: apps/staging
   prune: true
   sourceRef:
     kind: GitRepository

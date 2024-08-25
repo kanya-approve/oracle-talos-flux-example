@@ -63,7 +63,7 @@ metadata:
   namespace: kube-system
 spec:
   interval: 30m
-  path: ./deploy/prerequisite
+  path: deploy/prerequisite
   prune: true
   retryInterval: 5m
   sourceRef:
