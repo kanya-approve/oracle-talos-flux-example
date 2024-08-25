@@ -7,6 +7,21 @@ metadata:
 spec:
   interval: 1h
   path: infrastructure/controllers
+  patches:
+  - patch: |
+      - op: replace
+        path: /spec/ignore
+        value: /*
+    target:
+      kind: GitRepository
+      name: longhorn-nfs-installation
+  - patch: |
+      - op: replace
+        path: /spec/path
+        value: .
+    target:
+      kind: Kustomization
+      name: longhorn-nfs-installation
   prune: true
   retryInterval: 1m
   sourceRef:
@@ -22,7 +37,7 @@ metadata:
   namespace: flux-system
 spec:
   dependsOn:
-    - name: infra-controllers
+  - name: infra-controllers
   interval: 1h
   path: infrastructure/configs
   prune: true
