@@ -31,15 +31,16 @@ jobs:
           flux create kustomization flux-system \
           --source=flux-system \
           --path=./clusters/staging
-      - name: Verify cluster reconciliation
-        run: |
-          kubectl -n flux-system wait kustomization/infra-tenants --for=condition=ready --timeout=1m
-          kubectl -n flux-system wait kustomization/infra-controllers --for=condition=ready --timeout=10m
-          kubectl -n flux-system wait kustomization/infra-configs --for=condition=ready --timeout=1m
-          kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=5m
+      - name: Verify tenant reconciliation
+        run: kubectl -n flux-system wait kustomization/infra-tenants --for=condition=ready --timeout=1m
+      - name: Verify controllers reconciliation
+        run: kubectl -n flux-system wait kustomization/infra-controllers --for=condition=ready --timeout=10m
+      - name: Verify configs reconciliation
+        run: kubectl -n flux-system wait kustomization/infra-configs --for=condition=ready --timeout=1m
+      - name: Verify apps reconciliation
+        run: kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=5m
       - name: Verify helm reconciliation
-        run: |
-          kubectl -n apps wait --for=condition=ready --timeout=5m helmrelease --all
+        run: kubectl -n apps wait --for=condition=ready --timeout=5m helmrelease --all
       - name: Debug failure
         if: failure()
         run: |
