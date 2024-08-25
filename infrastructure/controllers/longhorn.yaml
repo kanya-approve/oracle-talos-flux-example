@@ -60,7 +60,6 @@ spec:
       labels:
         app: longhorn-nfs-installation
     spec:
-      automountServiceToken: false
       hostNetwork: true
       hostPID: true
       initContainers:
