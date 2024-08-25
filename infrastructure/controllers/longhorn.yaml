@@ -53,7 +53,7 @@ spec:
     !/deploy/prerequisite/longhorn-nfs-installation.yaml
   interval: 24h
   ref:
-    branch: main
+    branch: master
   url: https://github.com/longhorn/longhorn
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
