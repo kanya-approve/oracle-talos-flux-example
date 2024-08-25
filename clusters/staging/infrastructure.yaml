@@ -9,9 +9,8 @@ spec:
   path: infrastructure/controllers
   patches:
     - patch: |
-        - op: add
-          path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
-          value: disabled
+        - op: remove
+          path: /spec/template/spec/initContainers
   prune: true
   retryInterval: 1m
   sourceRef:
