@@ -417,7 +417,7 @@ git pull origin main
 Create a `kustomization.yaml` inside the `clusters/talos-cluster-clone` dir:
 
 ```yaml
-apiVersion: kustomize.config.k8s.io/v1
+apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - flux-system
