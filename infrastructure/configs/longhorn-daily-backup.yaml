@@ -3,7 +3,7 @@ apiVersion: longhorn.io/v1beta1
 kind: RecurringJob
 metadata:
   name: daily-backup
-  namespace: longhorn-system
+  namespace: storage
 spec:
   concurrency: 2
   cron: 0 3 * * *
