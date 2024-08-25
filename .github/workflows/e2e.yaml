@@ -41,7 +41,7 @@ jobs:
         run: kubectl -n flux-system wait kustomization/apps --for=condition=ready --timeout=5m
       - name: Verify helm reconciliation
         run: kubectl -n apps wait --for=condition=ready --timeout=5m helmrelease --all
-      - name: Debug failure
+      - name: Debug flux-system failure
         if: failure()
         run: |
           kubectl -n flux-system get all
@@ -49,3 +49,6 @@ jobs:
           kubectl -n flux-system logs deploy/kustomize-controller
           kubectl -n flux-system logs deploy/helm-controller
           flux get all --all-namespaces
+      - name: Debug all error events
+        if: failure()
+        run: kubectl get events --all-namespaces --field-selector type=Warning --sort-by=.metadata.creationTimestamp
