@@ -71,7 +71,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: longhorn-nfs-installation
-  suspend: true
   targetNamespace: kube-system
   timeout: 3m
   wait: true
