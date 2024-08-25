@@ -17,7 +17,6 @@ spec:
   chart:
     spec:
       chart: longhorn
-      interval: 12h
       sourceRef:
         kind: HelmRepository
         name: longhorn
