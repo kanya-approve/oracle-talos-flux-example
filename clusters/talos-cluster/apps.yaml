@@ -5,13 +5,13 @@ metadata:
   name: apps
   namespace: flux-system
 spec:
-  interval: 10m
   dependsOn:
     - name: infra-configs
+  interval: 10m
+  path: ./apps/talos-cluster
+  prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/talos-cluster
-  prune: true
-  wait: true
   timeout: 5m
+  wait: true

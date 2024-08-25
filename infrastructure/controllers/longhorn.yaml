@@ -58,22 +58,22 @@ spec:
       labels:
         app: longhorn-nfs-installation
     spec:
+      containers:
+      - image: registry.k8s.io/pause:latest
+        name: sleep
       hostNetwork: true
       hostPID: true
       initContainers:
-      - name: nfs-installation
-        command:
-          - nsenter
-          - --mount=/proc/1/ns/mnt
-          - --
-          - bash
-          - -c
-          - *cmd
+      - command:
+        - nsenter
+        - --mount=/proc/1/ns/mnt
+        - --
+        - bash
+        - -c
+        - *cmd
         image: alpine:latest
+        name: nfs-installation
         securityContext:
           privileged: true
-      containers:
-      - name: sleep
-        image: registry.k8s.io/pause:latest
   updateStrategy:
     type: RollingUpdate

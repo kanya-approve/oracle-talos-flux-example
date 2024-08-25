@@ -6,14 +6,6 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers
-  prune: true
-  wait: true
   patches:
     - patch: |
         - op: add
@@ -22,6 +14,14 @@ spec:
       target:
         kind: DaemonSet
         name: longhorn-nfs-installation
+  path: ./infrastructure/controllers
+  prune: true
+  retryInterval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  timeout: 5m
+  wait: true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -32,10 +32,10 @@ spec:
   dependsOn:
     - name: infra-controllers
   interval: 1h
+  path: ./infrastructure/configs
+  prune: true
   retryInterval: 1m
-  timeout: 5m
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./infrastructure/configs
-  prune: true
+  timeout: 5m
