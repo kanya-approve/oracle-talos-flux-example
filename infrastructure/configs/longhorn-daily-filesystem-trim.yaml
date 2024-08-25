@@ -3,7 +3,7 @@ apiVersion: longhorn.io/v1beta1
 kind: RecurringJob
 metadata:
   name: daily-filesystem-trim
-  namespace: kube-system
+  namespace: longhorn-system
 spec:
   concurrency: 2
   cron: 30 3 * * *
