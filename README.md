@@ -45,7 +45,7 @@ The Git repository contains the following top directories:
 ```
 ├── apps
 │   ├── base
-│   ├── production 
+│   ├── talos-cluster 
 │   └── staging
 ├── infrastructure
 │   ├── configs
@@ -60,7 +60,7 @@ The Git repository contains the following top directories:
 The apps configuration is structured into:
 
 - **apps/base/** dir contains namespaces and Helm release definitions
-- **apps/production/** dir contains the talos-cluster Helm release values
+- **apps/talos-cluster/** dir contains the talos-cluster Helm release values
 - **apps/staging/** dir contains the staging values
 
 ```
@@ -71,7 +71,7 @@ The apps configuration is structured into:
 │       ├── namespace.yaml
 │       ├── release.yaml
 │       └── repository.yaml
-├── production
+├── talos-cluster
 │   ├── kustomization.yaml
 │   └── podinfo-patch.yaml
 └── staging
@@ -125,7 +125,7 @@ spec:
 Note that with ` version: ">=1.0.0-alpha"` we configure Flux to automatically upgrade
 the `HelmRelease` to the latest chart version including alpha, beta and pre-releases.
 
-In **apps/production/** dir we have a Kustomize patch with the production specific values:
+In **apps/talos-cluster/** dir we have a Kustomize patch with the talos-cluster specific values:
 
 ```yaml
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -140,7 +140,7 @@ spec:
   values:
     ingress:
       hosts:
-        - host: podinfo.production
+        - host: podinfo.talos-cluster
 ```
 
 Note that with ` version: ">=1.0.0"` we configure Flux to automatically upgrade
