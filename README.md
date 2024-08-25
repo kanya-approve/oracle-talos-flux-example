@@ -258,7 +258,7 @@ metadata:
   name: apps
   namespace: flux-system
 spec:
-  interval: 10m0s
+  interval: 10m
   dependsOn:
     - name: infra-configs
   sourceRef:

@@ -5,7 +5,7 @@ metadata:
   name: bitnami
   namespace: flux-system
 spec:
-  interval: 5m0s
+  interval: 5m
   type: oci
   url: oci://registry-1.docker.io/bitnamicharts
 ---
@@ -25,7 +25,7 @@ spec:
       version: "*"
   install:
     crds: Create
-  interval: 1h0m0s
+  interval: 1h
   releaseName: sealed-secrets-controller
   targetNamespace: flux-system
   upgrade:
