@@ -20,8 +20,9 @@ jobs:
       - name: Check for updates
         id: update
         run: |
-          flux install --export > ./clusters/staging/flux-system/gotk-components.yaml
-          flux install --export > ./clusters/talos-cluster/flux-system/gotk-components.yaml
+          for cluster in ./clusters/*; do
+            flux install --export > "${cluster}/flux-system/gotk-components.yaml"
+          done
           VERSION="$(flux -v)"
           echo "flux_version=$VERSION" >> $GITHUB_OUTPUT          
       - name: Create Pull Request
