@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: longhorn-backup-creds
-  namespace: storage
+  namespace: kube-system
 type: Opaque
 stringData:
   AWS_ACCESS_KEY_ID: PLACEHOLDER
