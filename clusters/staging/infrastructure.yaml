@@ -7,6 +7,11 @@ metadata:
 spec:
   interval: 1h
   path: infrastructure/controllers
+  patches:
+    - patch: |
+        - op: add
+          path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1reconcile
+          value: disabled
   prune: true
   retryInterval: 1m
   sourceRef:

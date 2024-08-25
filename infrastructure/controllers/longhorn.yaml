@@ -64,8 +64,6 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  annotations:
-    kustomize.toolkit.fluxcd.io/ssa: Ignore
   name: longhorn-nfs-installation
   namespace: longhorn-system
 spec:
