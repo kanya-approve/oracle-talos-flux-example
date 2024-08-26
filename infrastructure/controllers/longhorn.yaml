@@ -1,17 +1,4 @@
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  annotations:
-    sealedsecrets.bitnami.com/managed: "true"
-  name: longhorn-backup-secret
-  namespace: storage
-stringData:
-  AWS_ACCESS_KEY_ID: ""
-  AWS_ENDPOINTS: ""
-  AWS_SECRET_ACCESS_KEY: ""
-type: Opaque
----
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
@@ -33,7 +20,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: longhorn
-      version: '*'
+      version: "*"
   interval: 30m
   values:
     defaultSettings:
@@ -42,13 +29,18 @@ spec:
       backupCompressionMethod: gzip
       concurrentAutomaticEngineUpgradePerNodeLimit: 1
       defaultDataLocality: best-effort
+      defaultReplicaCount: 1
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
       orphanAutoDeletion: true
       removeSnapshotsDuringFilesystemTrim: true
       replicaAutoBalance: least-effort
-      rwxVolumeFastFailover: true
+      rwxVolumeFastFailover: false
+      snapshotMaxCount: 2
+      storageMinimalAvailablePercentage: 10
+      storageReservedPercentageForDefaultDisk: 10
     persistence:
       defaultClass: true
+      defaultClassReplicaCount: 1
       defaultDataLocality: best-effort
       nfsOptions: async,hard,nfsvers=4,noatime,proto=tcp,retrans=2,rsize=65536,timeo=600,wsize=65536
       reclaimPolicy: Delete
