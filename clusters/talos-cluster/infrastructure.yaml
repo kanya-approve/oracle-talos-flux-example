@@ -26,17 +26,11 @@ spec:
   interval: 1h
   path: infrastructure/controllers
   patches:
-  - patch: |
-      - op: replace
-        path: /spec/ignore
-        value: /*
+  - patch: "- op: replace\n  path: /spec/ignore\n  value: /*\n"
     target:
       kind: GitRepository
       name: longhorn-nfs-installation
-  - patch: |
-      - op: replace
-        path: /spec/path
-        value: .
+  - patch: "- op: replace\n  path: /spec/path\n  value: .\n"
     target:
       kind: Kustomization
       name: longhorn-nfs-installation
