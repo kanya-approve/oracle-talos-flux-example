@@ -34,7 +34,7 @@ jobs:
       - name: Verify tenant reconciliation
         run: kubectl -n flux-system wait kustomization/infra-tenants --for=condition=ready --timeout=1m
       - name: Verify controllers reconciliation
-        run: kubectl -n flux-system wait kustomization/infra-controllers --for=condition=ready --timeout=10m
+        run: kubectl -n flux-system wait kustomization/infra-controllers --for=condition=ready --timeout=5m
       - name: Verify configs reconciliation
         run: kubectl -n flux-system wait kustomization/infra-configs --for=condition=ready --timeout=1m
       - name: Verify apps reconciliation
