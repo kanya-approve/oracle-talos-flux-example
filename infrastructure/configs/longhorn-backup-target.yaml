@@ -5,3 +5,10 @@ metadata:
   name: backup-target
   namespace: storage
 value: s3://my-bucket
+---
+apiVersion: longhorn.io/v1beta1
+kind: Setting
+metadata:
+  name: backup-target-credential-secret
+  namespace: storage
+value: longhorn-backup-secret
