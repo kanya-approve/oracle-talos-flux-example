@@ -17,10 +17,10 @@ spec:
     remediation:
       retries: 3
   values:
+    ingress:
+      enabled: false
+      className: nginx
     redis:
       enabled: true
       repository: public.ecr.aws/docker/library/redis
       tag: latest
-    ingress:
-      enabled: false
-      className: nginx
