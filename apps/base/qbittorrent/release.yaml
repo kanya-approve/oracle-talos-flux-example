@@ -1,0 +1,53 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: qbittorrent
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: qbittorrent
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: truecharts
+  interval: 50m
+  values:
+    addons:
+      gluetun:
+        enabled: true
+        container:
+          env:
+            FIREWALL_INPUT_PORTS: "8000"
+            FIREWALL_OUTBOUND_SUBNETS: 10.0.0.0/24,10.244.0.0/16,10.96.0.0/12
+            FIREWALL: "on"
+    common:
+      ingress:
+        main:
+          integrations:
+            traefik:
+              enabled: false
+    persistence:
+      config:
+        type: emptyDir
+    portal:
+      open:
+        enabled: false
+    service:
+      gluetun-control-server:
+        enabled: true
+        ports:
+          gluetun:
+            enabled: true
+            port: 8000
+            protocol: http
+            targetPort: 8000
+        type: ClusterIP
+      torrent:
+        enabled: true
+        ports:
+          torrent:
+            enabled: true
+            port: 39242
+

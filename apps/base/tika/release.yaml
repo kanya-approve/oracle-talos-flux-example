@@ -1,0 +1,19 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tika
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: tika
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: tika
+  interval: 50m
+  values:
+    image:
+      pullPolicy: Always
+      tag: latest-full

@@ -1,0 +1,25 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gotenberg
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: gotenberg
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: gotenberg
+  interval: 50m
+  values:
+    image:
+      pullPolicy: Always
+      tag: edge
+    prometheus:
+      namespace: apps
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi

@@ -1,0 +1,95 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: home-assistant
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: home-assistant
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: truecharts
+  interval: 50m
+  values:
+    cnpg:
+      main:
+        enabled: false
+    common:
+      ingress:
+        main:
+          integrations:
+            traefik:
+              enabled: false
+    configmap:
+      init:
+        data:
+          init.sh: |-
+            #!/bin/sh
+            config="/config/configuration.yaml"
+            default="/config/init"
+            if [ ! -f "$config" ]; then
+              echo "File [$config] does NOT exist. Creating..."
+              cp "$default/configuration.yaml.default" "$config"
+            fi
+            if ! grep -q "recorder:" "$config"; then
+              echo "Section [recorder] does NOT exist in [$config]. Appending..."
+              echo "" >> "$config"
+              cat "$default/recorder.default" >> "$config"
+            fi
+            if ! grep -q "http:" "$config"; then
+              echo "Section [http] does NOT exist in [$config]. Appending..."
+              echo "" >> "$config"
+              cat "$default/http.default" >> "$config"
+            fi
+
+            echo "Creating include files..."
+            for include_file in groups.yaml automations.yaml scripts.yaml scenes.yaml; do
+              if [ ! -f "/config/$include_file" ]; then
+                echo "File [$include_file] missing. Creating"
+                touch "/config/$include_file"
+              fi
+            done
+
+            cd "/config" || echo "Could not change path to /config"
+            echo "Creating custom_components directory..."
+            mkdir -p "/config/custom_components" || echo "custom_components directory already exists"
+
+            echo "Changing to the custom_components directory..."
+            cd "/config/custom_components" || echo "Could not change path to /config/custom_components"
+
+            echo "Downloading HACS"
+            wget "https://github.com/hacs/integration/releases/latest/download/hacs.zip" || exit 0
+
+            if [ -d "/config/custom_components/hacs" ]; then
+              echo "HACS directory already exist, cleaning up..."
+              rm -R "/config/custom_components/hacs"
+            fi
+
+            echo "Creating HACS directory..."
+            mkdir -p "/config/custom_components/hacs"
+
+            echo "Unpacking HACS..."
+            unzip "/config/custom_components/hacs.zip" -d "/config/custom_components/hacs" >/dev/null 2>&1
+
+            echo "Removing HACS zip file..."
+            rm "/config/custom_components/hacs.zip"
+            echo "Installation complete."
+          recorder.default: |-
+            recorder:
+              commit_interval: 3
+              purge_keep_days: 30
+    homeassistant:
+      trusted_proxies:
+        - 10.96.0.0/12
+        - 10.244.0.0/16
+    persistence:
+      config:
+        size: 50Mi
+        type: emptyDir
+    workload:
+      main:
+        podSpec:
+          hostNetwork: true

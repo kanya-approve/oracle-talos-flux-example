@@ -1,0 +1,36 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: seerr
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: seerr
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: truecharts
+  interval: 50m
+  values:
+    common:
+      ingress:
+        main:
+          integrations:
+            traefik:
+              enabled: false
+    persistence:
+      config:
+        size: 50Mi
+        type: emptyDir
+    portal:
+      open:
+        enabled: false
+    workload:
+      main:
+        podSpec:
+          containers:
+            main:
+              env:
+                HOME: /tmp

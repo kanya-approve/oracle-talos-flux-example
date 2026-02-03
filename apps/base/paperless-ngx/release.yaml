@@ -1,0 +1,51 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: paperless-ngx
+  namespace: apps
+spec:
+  chart:
+    spec:
+      chart: paperless-ngx
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: truecharts
+  interval: 50m
+  values:
+    cnpg:
+      main:
+        enabled: false
+    common:
+      ingress:
+        main:
+          integrations:
+            traefik:
+              enabled: false
+    persistence:
+      consume:
+        size: 1Gi
+        type: emptyDir
+      data:
+        size: 1Gi
+        type: emptyDir
+      media:
+        size: 1Gi
+        type: emptyDir
+    portal:
+      open:
+        enabled: false
+    workload:
+      main:
+        podSpec:
+          containers:
+            main:
+              env:
+                PAPERLESS_ADMIN_MAIL: user@example.com
+                PAPERLESS_ADMIN_PASSWORD: example
+                PAPERLESS_ADMIN_USER: example
+                PAPERLESS_DBHOST: ""
+                PAPERLESS_DBNAME: ""
+                PAPERLESS_DBPASS: ""
+                PAPERLESS_DBUSER: ""
