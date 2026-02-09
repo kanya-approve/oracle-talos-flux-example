@@ -23,6 +23,8 @@ spec:
       version: "*"
   interval: 30m
   values:
+    alloy:
+      enabled: false
     engines:
       local:
         lvm:
@@ -32,6 +34,13 @@ spec:
       replicated:
         mayastor:
           enabled: false
+    localpv-provisioner:
+      analytics:
+        enabled: false
+    loki:
+      enabled: false
+      minio:
+        enabled: false
     mayastor:
       csi:
         node:
@@ -42,12 +51,12 @@ spec:
         resources:
           limits:
             cpu: "1"
-            memory: "1Gi"
-            hugepages2Mi: "1Gi"
+            memory: 1Gi
+            hugepages2Mi: 1Gi
           requests:
             cpu: "1"
-            memory: "1Gi"
-            hugepages2Mi: "1Gi"
+            memory: 1Gi
+            hugepages2Mi: 1Gi
       storageClass:
         nameSuffix: triple-replicas
         parameters:
