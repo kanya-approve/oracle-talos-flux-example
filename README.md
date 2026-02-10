@@ -1,16 +1,16 @@
-# flux2-kustomize-helm-example
+# Media Server Home Lab with Flux CD
 
 [![test](https://github.com/fluxcd/flux2-kustomize-helm-example/workflows/test/badge.svg)](https://github.com/fluxcd/flux2-kustomize-helm-example/actions)
 [![e2e](https://github.com/fluxcd/flux2-kustomize-helm-example/workflows/e2e/badge.svg)](https://github.com/fluxcd/flux2-kustomize-helm-example/actions)
 [![license](https://img.shields.io/github/license/fluxcd/flux2-kustomize-helm-example.svg)](https://github.com/fluxcd/flux2-kustomize-helm-example/blob/main/LICENSE)
 
-For this example we assume a scenario with two clusters: staging and talos-cluster.
-The end goal is to leverage Flux and Kustomize to manage both clusters while minimizing duplicated declarations.
+For this media server/home lab setup we manage two clusters: staging and talos-cluster.
+The goal is to leverage Flux and Kustomize to manage both clusters while minimizing duplicated declarations.
 
-We will configure Flux to install, test and upgrade a demo app using
+We configure Flux to install, test and upgrade multiple applications from TrueCharts using
 `HelmRepository` and `HelmRelease` custom resources.
-Flux will monitor the Helm repository, and it will automatically
-upgrade the Helm releases to their latest chart version based on semver ranges.
+Flux monitors the Helm repository and automatically
+upgrades Helm releases to their latest chart version based on semver ranges.
 
 ## Prerequisites
 
@@ -39,17 +39,18 @@ curl -s https://fluxcd.io/install.sh | sudo bash
 The Git repository contains the following top directories:
 
 - **apps** dir contains Helm releases with a custom configuration per cluster
-- **infrastructure** dir contains common infra tools such as ingress-nginx and cert-manager
+- **infrastructure** dir contains common infrastructure components such as OpenEBS (storage), Prometheus (monitoring), kubeseal (secrets), capacitor (GitOps runtime), and TrueCharts repository
 - **clusters** dir contains the Flux configuration per cluster
 
 ```
 ├── apps
 │   ├── base
-│   ├── talos-cluster 
+│   ├── talos-cluster
 │   └── staging
 ├── infrastructure
 │   ├── configs
-│   └── controllers
+│   ├── controllers
+│   └── tenants
 └── clusters
     ├── talos-cluster
     └── staging
@@ -59,7 +60,7 @@ The Git repository contains the following top directories:
 
 The apps configuration is structured into:
 
-- **apps/base/** dir contains namespaces and Helm release definitions
+- **apps/base/** dir contains namespaces and Helm release definitions for all applications
 - **apps/talos-cluster/** dir contains the talos-cluster Helm release values
 - **apps/staging/** dir contains the staging values
 
@@ -78,6 +79,8 @@ The apps configuration is structured into:
     ├── kustomization.yaml
     └── podinfo-patch.yaml
 ```
+
+Additional media server applications (Plex, Radarr, Sonarr, etc.) are defined in `apps/base/`. The podinfo application is shown as an example.
 
 In **apps/base/podinfo/** dir we have a Flux `HelmRelease` with common values for both clusters:
 
@@ -150,90 +153,38 @@ the `HelmRelease` to the latest stable chart version (alpha, beta and pre-releas
 
 The infrastructure is structured into:
 
-- **infrastructure/controllers/** dir contains namespaces and Helm release definitions for Kubernetes controllers
-- **infrastructure/configs/** dir contains Kubernetes custom resources such as cert issuers and networks policies
+- **infrastructure/controllers/** dir contains Helm release definitions for infrastructure controllers
+- **infrastructure/configs/** dir contains configuration resources such as the TrueCharts Helm repository
+- **infrastructure/tenants/** dir contains tenant configurations for organizing applications, monitoring, networking, and storage
 
 ```
 ./infrastructure/
 ├── configs
-│   ├── cluster-issuers.yaml
-│   └── kustomization.yaml
-└── controllers
-    ├── cert-manager.yaml
-    ├── ingress-nginx.yaml
+│   ├── truecharts.yaml
+│   └── kustomization.yaml
+├── controllers
+│   ├── capacitor.yaml
+│   ├── kubeseal.yaml
+│   ├── openebs.yaml
+│   ├── prometheus-operator-crds.yaml
+│   └── kustomization.yaml
+└── tenants
+    ├── apps.yaml
+    ├── monitoring.yaml
+    ├── networking.yaml
+    ├── storage.yaml
     └── kustomization.yaml
 ```
 
-In **infrastructure/controllers/** dir we have the Flux `HelmRepository` and `HelmRelease` definitions such as:
+Key infrastructure components include:
 
-```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: cert-manager
-  namespace: cert-manager
-spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: cert-manager
-      version: "1.x"
-      sourceRef:
-        kind: HelmRepository
-        name: cert-manager
-        namespace: cert-manager
-      interval: 12h
-  values:
-    installCRDs: true
-```
+- **OpenEBS**: Container-native storage with Mayastor for persistent volumes
+- **Prometheus Operator**: Monitoring and alerting stack with Custom Resource Definitions
+- **kubeseal**: Sealed Secrets for encrypted secret management
+- **capacitor**: GitOps capacitor for managing manifests
+- **TrueCharts**: Helm repository (OCI registry) for media server applications
 
-Note that with ` interval: 12h` we configure Flux to pull the Helm repository index every twelfth hours to check for updates.
-If the new chart version that matches the `1.x` semver range is found, Flux will upgrade the release.
-
-In **infrastructure/configs/** dir we have Kubernetes custom resources, such as the Let's Encrypt issuer:
-
-```yaml
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt
-spec:
-  acme:
-    # Replace the email address with your own contact email
-    email: fluxcdbot@users.noreply.github.com
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    privateKeySecretRef:
-      name: letsencrypt-nginx
-    solvers:
-      - http01:
-          ingress:
-            class: nginx
-```
-
-In **clusters/talos-cluster/infrastructure.yaml** we replace the Let's Encrypt server value to point to the talos-cluster API:
-
-```yaml
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: infra-configs
-  namespace: flux-system
-spec:
-  # ...omitted for brevity
-  dependsOn:
-    - name: infra-controllers
-  patches:
-    - patch: |
-        - op: replace
-          path: /spec/acme/server
-          value: https://acme-v02.api.letsencrypt.org/directory
-      target:
-        kind: ClusterIssuer
-        name: letsencrypt
-```
-
-Note that with `dependsOn` we tell Flux to first install or upgrade the controllers and only then the configs.
-This ensures that the Kubernetes CRDs are registered on the cluster, before Flux applies any custom resources.
+The infrastructure components are managed via Flux `HelmRelease` resources similar to applications.
 
 ## Bootstrap staging and talos-cluster
 
@@ -306,23 +257,14 @@ Watch for the Helm releases being installed on staging:
 ```console
 $ watch flux get helmreleases --all-namespaces
 
-NAMESPACE    	NAME         	REVISION	SUSPENDED	READY	MESSAGE 
-cert-manager 	cert-manager 	v1.11.0 	False    	True 	Release reconciliation succeeded
-ingress-nginx	ingress-nginx	4.4.2   	False    	True 	Release reconciliation succeeded
-podinfo      	podinfo      	6.3.0   	False    	True 	Release reconciliation succeeded
+NAMESPACE       NAME                       REVISION   SUSPENDED   READY   MESSAGE
+storage         openebs                    v4.0.0     False       True    Release reconciliation succeeded
+flux-system     sealed-secrets             v2.0.0     False       True    Release reconciliation succeeded
+monitoring      prometheus-operator-crds   v0.0.0     False       True    Release reconciliation succeeded
+podinfo         podinfo                    6.3.0      False       True    Release reconciliation succeeded
 ```
 
-Verify that the demo app can be accessed via ingress:
-
-```console
-$ kubectl -n ingress-nginx port-forward svc/ingress-nginx-controller 8080:80 &
-
-$ curl -H "Host: podinfo.staging" http://localhost:8080
-{
-  "hostname": "podinfo-59489db7b5-lmwpn",
-  "version": "6.2.3"
-}
-```
+Check that all Helm releases are ready before proceeding.
 
 Bootstrap Flux on talos-cluster by setting the context and path to your talos cluster:
 
