@@ -5,6 +5,149 @@ metadata:
   name: prowlarr-indexers
   namespace: apps
 data:
+  aiostreams.yml: |
+    id: aiostreams
+    name: AIOStreams
+    description: "A custom Prowlarr indexer for the AIOStreams torrent/debrid search add-on."
+    language: en-US
+    type: public
+    encoding: UTF-8
+    followredirect: false
+    testlinktorrent: false
+    requestDelay: 5
+    links:
+      - https://aiostreams.12312023.xyz
+      - https://aiostreams.stremiofr.com
+      - https://aiostreams.viren070.me
+      - https://aiostreamsfortheweak.nhyira.dev
+      - https://aiostreamsfortheweebs.midnightignite.me
+
+    caps:
+      categories:
+        Movies: Movies
+        TV: TV
+      modes:
+        search: [q]
+        movie-search: [q, imdbid]
+        tv-search: [q, imdbid, season, ep]
+      allowrawsearch: false
+    settings:
+      - name: info
+        type: info
+        label: Base64 config
+        default: "Complete your configuration and copy the generated link.<br/> Paste the link into your browser to find your code eg. http://localhost:3000/stremio/uuid/base64_string/manifest.json."
+      - name: uuid
+        type: text
+        label: UUID
+        default: ""
+      - name: b64config
+        type: text
+        label: Base64 Encoded Configuration
+        default: ""
+      - name: validate_imdb_movie
+        type: text
+        label: IMDB ID of Movie to use for Radarr validation (must exist in indexer)
+        default: "tt0137523"
+      - name: validate_imdb_tv
+        type: text
+        label: IMDB ID TV show to use for Sonarr validation (must exist in indexer)
+        default: "tt9288030"
+    search:
+      headers:
+        User-Agent:
+          [
+            "AIOStreams/1.0",
+          ]
+      paths:
+        - path: /stremio/{{ .Config.uuid }}/{{ .Config.b64config }}/stream/movie/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_movie }}{{ end }}.json
+          method: get
+          response:
+            type: json
+            noResultsMessage: '"streams": []'
+          categories: [Movies]
+
+        - path: /stremio/{{ .Config.uuid }}/{{ .Config.b64config }}/stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_tv }}{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}:{{ if .Query.Ep }}{{ .Query.Ep }}{{ else }}1{{ end }}.json
+          method: get
+          response:
+            type: json
+            noResultsMessage: '"streams": []'
+          categories: [TV]
+      rows:
+        selector: streams
+        missingAttributeEqualsNoResults: true
+
+      fields:
+        parsed_title:
+          selector: behaviorHints.filename
+          optional: true
+          default: "Unknown Title"
+          filters:
+            - name: trim
+        title_fallback:
+          selector: streamData.filename
+          default: "Unknown Title"
+          filters:
+            - name: trim
+        title:
+          text: "{{ if .Result.parsed_title }}{{ .Result.parsed_title }}{{ else }}{{ .Result.title_fallback }}{{ end }}"
+        parsed_year:
+          selector: streamData.parsedFile.year
+          optional: true
+        year_fallback:
+          selector: description
+          filters:
+            - name: regexp
+              args: "(\\b(19|20)\\d{2}\\b)"
+        year:
+          text: "{{ if .Result.parsed_year }}{{ .Result.parsed_year }}{{ else }}{{ .Result.year_fallback }}{{ end }}"
+        category_is_tv_show:
+          selector: streamData.parsedFile.season
+          optional: true
+        category:
+          text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
+        infohash:
+          optional: true
+          selector: streamData.torrent.infoHash
+          filters:
+            - name: trim
+            - name: regexp
+              args: ([A-F|a-f|0-9]{40})
+        parsed_size:
+          selector: streamData.size
+          optional: true
+        size_fallback:
+          selector: behaviorHints.videoSize
+          optional: true
+        size_description:
+          selector: description
+          filters:
+            - name: regexp
+              args: "\\b(\\d+(?:\\.\\d+)? [MG]B)\\b"
+        size:
+          text: "{{ if .Result.parsed_size }}{{ .Result.parsed_size }}{{ else if .Result.size_fallback }}{{ .Result.size_fallback }}{{ else }}{{ .Result.size_description }}{{ end }}"
+        parsed_quality:
+          selector: streamData.parsedFile.quality
+          optional: true
+        quality_fallback:
+          selector: name
+          filters:
+            - name: regexp
+              args: "\\b2160p|1080p|720p|480p\\b"
+        quality:
+          text: "{{ if .Result.parsed_quality }}{{ .Result.parsed_quality }}{{ else }}{{ .Result.quality_fallback }}{{ end }}"
+        date:
+          text: "Apr. 18th '11"
+          filters:
+            - name: re_replace
+              args: ["st|nd|rd|th", ""]
+            - name: replace
+              args: ["'", ""]
+            - name: dateparse
+              args: "MMM. d yy"
+        seeders:
+          text: "30"
+        leechers:
+          text: "0"
   comet.yml: |
     # =============================================#
     #         Property of Puks The Pirate.         #
@@ -29,8 +172,9 @@ data:
     testlinktorrent: false
     requestDelay: 15
     links:
-      - https://comet.elfhosted.com
       - http://comet:8000
+      - https://comet.elfhosted.com
+      - https://comet.feels.legal
 
     caps:
       categories:
@@ -75,7 +219,7 @@ data:
           categories: [TV]
 
       rows:
-        selector: streams
+        selector: streams:has(behaviorHints)
         missingAttributeEqualsNoResults: true
 
       fields:
@@ -109,10 +253,10 @@ data:
         category:
           text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
         infohash:
-          selector: url
+          selector: behaviorHints.bingeGroup
           filters:
-            - name: regexp
-              args: "/playback/([^/]+)"
+            - name: split
+              args: ["|", 2]
         size:
           text: "{{ if .Result.torrent_size }}{{ .Result.torrent_size }}{{ else }}{{ .Result.torrentio_size }}{{ end }}"
         quality:
@@ -133,107 +277,72 @@ data:
           text: "30"
         leechers:
           text: "0"
-  elfhosted-public.yml: |
-    ---
-    id: elfhosted-public
-    name: ElfHosted Free Public Torrentio/Knightcrawler Indexer
-    description: "ElfHosted Free Public Torrentio/Knightcrawler Indexer (rate-limited)"
+  debridio.yml: |
+    id: debridio
+    name: Debridio
+    description: "Debridio API"
     language: en-US
-    type: public
+    type: private
     encoding: UTF-8
     followredirect: false
     testlinktorrent: false
     requestDelay: 2
     links:
-      - https://torrentio.elfhosted.com
+      - https://debapi.debridio.com/
+
     caps:
       categories:
         Movies: Movies
         TV: TV
-    
+
       modes:
         search: [q]
         movie-search: [q, imdbid]
-        tv-search: [q, imdbid, season, ep]
+        tv-search: [q, imdbid]
       allowrawsearch: false
-    
     settings:
-      - name: opt_label
-        type: info
-        label: Torrentio Options are Required
-      - name: default_opts
-        type: text
-        label: Torrentio Options
-        default: "providers=yts,eztv,rarbg,1337x|sort=qualitysize|qualityfilter=480p,scr,cam"
-      - name: rdkey_label
-        type: info
-        label: Debrid settings required
-      - name: debrid_provider_key
-        type: text
-        label: Debrid provider API Key
+      - name: api_token
+        type: password
+        label: Debridio.com API Key
         default: ""
-      - name: debrid_provider
-        type: select
-        label: Debrid provider
-        default: realdebrid
-        options:
-          realdebrid: Real-Debrid
-          alldebrid: AllDebrid
-          premiumize: Premiumize
-          debridlink: Debridlink
-          offcloud: Offcloud
-          putio: Put.io    
-      - name: validation_label
-        type: info
-        label: Validation settings optional   
-      - name: validate_imdb_movie_label
-        type: info
-        label: The following help to validate an indexer in Sonarr by confirming that the show returns results
-      - name: validate_imdb_movie
+      - name: default_movie_query
+        label: "Default Movie Imdb Query"
         type: text
-        label: IMDB ID of Movie to use for Radarr validation (must exist in indexer)
-        default: "tt0137523"  # Fight Club
-      - name: validate_imdb_tv_label
-        type: info
-        label: The following help to validate an indexer in Sonarr by confirming that the show returns results
-      - name: validate_imdb_tv
+        default: "tt0137523"
+      - name: default_tv_query
         type: text
-        label: IMDB ID TV show to use for Sonarr validation (must exist in indexer)
-        default: "tt9288030"  # Reacher S02E01
-    
+        label: "Default TV Imdb Query"
+        default: "tt18482892"
+
+
     search:
-      headers:
-        User-Agent: ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0"]
       paths:
-        - path: "{{ if .Query.IMDBID }}{{ .Config.default_opts }}|{{ .Config.debrid_provider }}={{ .Config.debrid_provider_key }}/stream/movie/{{ .Query.IMDBID }}.json{{ else }}providers=rarbg,1337x|sort=size|qualityfilter=brremux,hdrall,dolbyvision,4k,720p,480p,other,scr,cam,unknown|sort=size|limit=1|{{ .Config.debrid_provider }}={{ .Config.debrid_provider_key }}/stream/movie/{{ .Config.validate_imdb_movie }}.json{{ end }}"
+        - path: /{{ .Config.api_token }}/search/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.default_movie_query }}{{ end }}
           method: get
           response:
             type: json
-            noResultsMessage: '"streams": []'
           categories: [Movies]
-        - path: "{{ if .Query.IMDBID }}{{ .Config.default_opts }}{{else}}providers=rarbg,1337x|sort=size|qualityfilter=brremux,hdrall,dolbyvision,4k,720p,480p,other,scr,cam,unknown|limit=1{{ end }}|{{ .Config.debrid_provider }}={{ .Config.debrid_provider_key }}/stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID}}{{ else }}{{ .Config.validate_imdb_tv }}{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}:{{ if .Query.Ep }}{{ .Query.Ep }}{{ else }}1{{ end }}.json"
+
+        - path: /{{ .Config.api_token }}/search/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.default_movie_query }}{{ end }}
           method: get
           response:
             type: json
-            noResultsMessage: '"streams": []'
           categories: [TV]
-    
-    
+
       rows:
-        selector: streams
-        missingAttributeEqualsNoResults: true
-    
+        selector: "$"
+
       fields:
         title:
-          selector: title
-          filters:
-            - name: split
-              args: ["\n", 0]
-        year:
-          selector: title
-          filters:
-            - name: regexp
-              args: "(\\b(19|20)\\d\\d\\b)"
+          selector: name
+        infohash:
+          selector: hash
+        size:
+          selector: size
+        seeders:
+          selector: seeders
+        leechers:
+          text: "0"
         category_is_tv_show:
           text: "{{ .Result.title }}"
           filters:
@@ -241,135 +350,22 @@ data:
               args: "\\b(S\\d+(?:E\\d+)?)\\b"
         category:
           text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
-        infohash:
-          selector: url
-          filters:
-            - name: split
-              args: ["/", 5]
-        size:
-          selector: title
-          filters:
-            - name: regexp
-              args: "\\b(\\d+(?:\\.\\d+)? [MG]B)\\b"
-  knightcrawler.yml: |
-    ---
-    id: knightcrawler
-    name: Knightcrawler Indexer
-    description: "Self-hosted Knightcrawler Indexer"
-    language: en-US
-    type: public
-    encoding: UTF-8
-    followredirect: false
-    testlinktorrent: false
-    requestDelay: 2
-    links:
-      - https://torrentio.elfhosted.com # replace with your URL here
-    caps:
-      categories:
-        Movies: Movies
-        TV: TV
-    
-      modes:
-        search: [q]
-        movie-search: [q, imdbid]
-        tv-search: [q, imdbid, season, ep]
-      allowrawsearch: false
-    
-    settings:
-      - name: opt_label
-        type: info
-        label: Torrentio Options are Required
-      - name: default_opts
-        type: text
-        label: Torrentio Options
-        default: "providers=yts,eztv,rarbg,1337x|sort=qualitysize|qualityfilter=480p,scr,cam"
-      - name: rdkey_label
-        type: info
-        label: Debrid settings required
-      - name: debrid_provider_key
-        type: text
-        label: Debrid provider API Key
-        default: ""
-      - name: debrid_provider
-        type: select
-        label: Debrid provider
-        default: realdebrid
-        options:
-          realdebrid: Real-Debrid
-          alldebrid: AllDebrid
-          premiumize: Premiumize
-          debridlink: Debridlink
-          offcloud: Offcloud
-          putio: Put.io    
-      - name: validation_label
-        type: info
-        label: Validation settings optional   
-      - name: validate_imdb_movie_label
-        type: info
-        label: The following help to validate an indexer in Sonarr by confirming that the show returns results
-      - name: validate_imdb_movie
-        type: text
-        label: IMDB ID of Movie to use for Radarr validation (must exist in indexer)
-        default: "tt0137523"  # Fight Club
-      - name: validate_imdb_tv_label
-        type: info
-        label: The following help to validate an indexer in Sonarr by confirming that the show returns results
-      - name: validate_imdb_tv
-        type: text
-        label: IMDB ID TV show to use for Sonarr validation (must exist in indexer)
-        default: "tt9288030"  # Reacher S02E01
-    
-    search:
-      headers:
-        User-Agent: ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0"]
-      paths:
-        - path: "{{ if .Query.IMDBID }}{{ .Config.default_opts }}|{{ .Config.debrid_provider }}={{ .Config.debrid_provider_key }}/stream/movie/{{ .Query.IMDBID }}.json{{ else }}providers=rarbg,1337x|sort=size|qualityfilter=brremux,hdrall,dolbyvision,4k,720p,480p,other,scr,cam,unknown|sort=size|limit=1|{{ .Config.debrid_provider }}={{ .Config.debrid_provider_key }}/stream/movie/{{ .Config.validate_imdb_movie }}.json{{ end }}"
-          method: get
-          response:
-            type: json
-            noResultsMessage: '"streams": []'
-          categories: [Movies]
-        - path: "{{ if .Query.IMDBID }}{{ .Config.default_opts }}{{else}}providers=rarbg,1337x|sort=size|qualityfilter=brremux,hdrall,dolbyvision,4k,720p,480p,other,scr,cam,unknown|limit=1{{ end }}|{{ .Config.debrid_provider }}={{ .Config.debrid_provider_key }}/stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID}}{{ else }}{{ .Config.validate_imdb_tv }}{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}:{{ if .Query.Ep }}{{ .Query.Ep }}{{ else }}1{{ end }}.json"
-          method: get
-          response:
-            type: json
-            noResultsMessage: '"streams": []'
-          categories: [TV]
-    
-    
-      rows:
-        selector: streams
-        missingAttributeEqualsNoResults: true
-    
-      fields:
-        title:
-          selector: title
-          filters:
-            - name: split
-              args: ["\n", 1]
-        year:
-          selector: title
-          filters:
-            - name: regexp
-              args: "(\\b(19|20)\\d\\d\\b)"
-        category_is_tv_show:
-          text: "{{ .Result.title }}"
-          filters:
-            - name: regexp
-              args: "\\b(S\\d+(?:E\\d+)?)\\b"
-        category:
-          text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
-        infohash:
-          selector: url
-          filters:
-            - name: split
-              args: ["/", 5]
-        size:
-          selector: title
-          filters:
-            - name: regexp
-              args: "\\b(\\d+(?:\\.\\d+)? [MG]B)\\b"
+        indexer:
+          selector: indexer
   orionoid.yml: |
+    # =============================================#
+    #         Property of Puks The Pirate.         #
+    #----------------------------------------------#
+    #  Savvy Guides:                               #
+    #  https://savvyguides.wiki/sailarrsguide      #
+    #                                              #
+    #  Discord:                                    #
+    #  https://discord.gg/vMSnNcd7m5               #
+    #                                              #
+    #  Donate:                                     #
+    #  https://ko-fi.com/savvyservers/tip.         #
+    # =============================================#
+
     id: orionoid
     name: Orionoid
     description: "Orionoid Indexer"
@@ -381,7 +377,7 @@ data:
     requestDelay: 2
     links:
       - https://api.orionoid.com
-    
+
     caps:
       categories:
         Movies: Movies
@@ -408,7 +404,7 @@ data:
         type: text
         label: "Max Results Returned - 10 Recommended."
         default: "10"
-    
+
     search:
       paths:
         - path: /?keyapp=FGJKJFEBRHEMRFGSBGDLFPRGED96LJJL&keyuser={{ .Config.api_token }}&streamtype=torrent&mode=stream&action=retrieve&type=movie&sortvalue=videoquality&sortorder=ascending&idimdb={{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.default_movie_query }}{{ end }}&limitcount={{ .Config.max_results }}
@@ -416,17 +412,17 @@ data:
           response:
             type: json
           categories: [Movies]
-    
+
         - path: /?keyapp=FGJKJFEBRHEMRFGSBGDLFPRGED96LJJL&keyuser={{ .Config.api_token }}&streamtype=torrent&mode=stream&action=retrieve&type=show&idimdb={{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.default_tv_query }}{{ end }}&numberseason={{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}{{ if .Query.Ep }}&numberepisode={{ .Query.Ep }}{{ else }}{{ end }}&limitcount={{ .Config.max_results }}
           method: get
           response:
             type: json
           categories: [TV]
-    
+
       rows:
         selector: $.data.streams
         missingAttributeEqualsNoResults: true
-    
+
       fields:
         title:
           selector: file.name
@@ -467,6 +463,103 @@ data:
           filters:
             - name: timestamp
               args: "%Y-%m-%d %H:%M:%S"
+  stremthru.yml: |
+    # =============================================#
+    #         Property of Puks The Pirate.         #
+    #----------------------------------------------#
+    #  Savvy Guides:                               #
+    #  https://savvyguides.wiki/sailarrsguide      #
+    #                                              #
+    #  Discord:                                    #
+    #  https://discord.gg/vMSnNcd7m5               #
+    #                                              #
+    #  Donate:                                     #
+    #  https://ko-fi.com/savvyservers/tip.         #
+    # =============================================#
+
+    id: stremthru
+    name: Stremthru
+    description: "A custom indexer for Stremthru"
+    language: en-US
+    type: public
+    encoding: UTF-8
+    followredirect: false
+    testlinktorrent: false
+    requestDelay: 2
+    links:
+      - http://stremthru:8080
+      - https://stremthru.13377001.xyz
+      - https://stremthru.elfhosted.com
+
+    caps:
+      categories:
+        Movies: Movies
+        TV: TV
+      modes:
+        search: [q]
+        movie-search: [q, imdbid]
+        tv-search: [q, season, ep]
+      allowrawsearch: false
+
+    settings:
+      - name: validate_imdb_movie
+        type: text
+        label: IMDB ID of Movie to use for Radarr validation (must exist in indexer)
+        default: "tt7286456"
+      - name: validate_imdb_tv
+        type: text
+        label: IMDB ID TV show to use for Sonarr validation (must exist in indexer)
+        default: "tt3581920"
+
+    search:
+      paths:
+        - path: /v0/torrents?no_missing_size=1&sid={{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_movie }}{{ end }}
+          method: get
+          response:
+            type: json
+            noResultsMessage: '{"data":{"items":[],"total_items":0}}'
+          categories: [Movies]
+
+        - path: /v0/torrents?no_missing_size=1&sid={{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}{{ .Config.validate_imdb_tv }}{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}:{{ if .Query.Ep }}{{ .Query.Ep }}{{ else }}1{{ end }}"
+          method: get
+          response:
+            type: json
+            noResultsMessage: '{"data":{"items":[],"total_items":0}}'
+          categories: [TV]
+
+      rows:
+        selector: $.data.items
+        missingAttributeEqualsNoResults: true
+
+      fields:
+        title:
+          selector: name
+        category_is_tv_show:
+          text: "{{ .Result.title }}"
+          filters:
+            - name: regexp
+              args: "\\b(S\\d+(?:E\\d+)?)\\b"
+        category:
+          text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
+        infohash:
+          selector: hash
+        size:
+          selector: size
+        language:
+          text: "English"
+        seeders:
+          text: "30"
+        leechers:
+          text: "10"
+        date:
+          text: "Apr. 18th '11"
+          filters:
+            - name: re_replace
+              args: ["st|nd|rd|th", ""]
+            - name: replace
+              args: ["'", ""]
+            - name: dateparse
+              args: "MMM. d yy"
   torbox.yml: |
     ---
     id: torbox-torrents
@@ -489,7 +582,7 @@ data:
         tv-search: [q, imdbid, season, ep]
         movie-search: [q, imdbid]
       allowrawsearch: false
-    
+
     settings:
       - name: apikey
         type: password
@@ -512,7 +605,7 @@ data:
         type: text
         label: IMDB ID TV show to use for Sonarr validation (must exist in indexer)
         default: "tt9288030" # Reacher S02E01
-    
+
     search:
       headers:
         Authorization: ["Bearer {{ .Config.apikey }}"]
@@ -533,12 +626,12 @@ data:
             type: json
             noResultsMessage: "Could not find metadata. Please try again later."
           categories: [TV]
-    
+
       rows:
         selector: data.torrents
         count:
           selector: data.total_torrents
-    
+
       fields:
         title:
           selector: raw_title
@@ -690,6 +783,19 @@ data:
             - name: regexp
               args: "💾 (\\d+(?:\\.\\d+)? [KMGT]B)"
   zilean.yml: |
+    # =============================================#
+    #         Property of Puks The Pirate.         #
+    #----------------------------------------------#
+    #  Savvy Guides:                               #
+    #  https://savvyguides.wiki/sailarrsguide      #
+    #                                              #
+    #  Discord:                                    #
+    #  https://discord.gg/vMSnNcd7m5               #
+    #                                              #
+    #  Donate:                                     #
+    #  https://ko-fi.com/savvyservers/tip.         #
+    # =============================================#
+
     id: zilean
     name: Zilean
     description: "A custom indexer for Zilean the unofficial DMM indexer"
@@ -701,8 +807,8 @@ data:
     requestDelay: 2
     links:
       - http://zilean:8181
-      - https://zilean.elfhosted.com
-    
+      - https://zileanfortheweebs.midnightignite.me
+
     caps:
       categories:
         Movies: Movies
@@ -712,16 +818,16 @@ data:
         movie-search: [q, imdbid]
         tv-search: [q, season, ep]
       allowrawsearch: false
-    
+
     settings: []
-    
+
     search:
       paths:
         - path: /dmm/filtered
           method: get
           response:
             type: json
-    
+
       inputs:
         $raw: "{{ if .Query.IMDBID }}ImdbId={{ .Query.IMDBID }}{{ else }}Query={{ .Keywords }}{{ end }}"
         Season: "{{ if .Query.Season }}{{ .Query.Season }}{{ else }}{{ end }}"
@@ -736,11 +842,11 @@ data:
           args: ["[\\[\\]()]", ""]  # Remove brackets
         - name: re_replace
           args: ["^$", "limitless"]
-    
+
       rows:
         selector: $
         missingAttributeEqualsNoResults: true
-    
+
       fields:
         title:
           selector: raw_title
