@@ -24,6 +24,14 @@ spec:
       main:
         enabled: false
     persistence:
+      aiostreams:
+        defaultMode: "0664"
+        enabled: true
+        expandObjectName: false
+        mountPath: /config/Definitions/Custom/aiostreams.yml
+        objectName: prowlarr-indexers
+        subPath: aiostreams.yml
+        type: configmap
       comet:
         defaultMode: "0664"
         enabled: true
@@ -35,23 +43,13 @@ spec:
       config:
         size: 50Mi
         type: emptyDir
-      elfhosted-public:
+      debridio:
         defaultMode: "0664"
         enabled: true
         expandObjectName: false
-        mountPath: /config/Definitions/Custom/elfhosted-public.yml
+        mountPath: /config/Definitions/Custom/debridio.yml
         objectName: prowlarr-indexers
-        readOnly: true
-        subPath: elfhosted-public.yml
-        type: configmap
-      knightcrawler:
-        defaultMode: "0664"
-        enabled: true
-        expandObjectName: false
-        mountPath: /config/Definitions/Custom/knightcrawler.yml
-        objectName: prowlarr-indexers
-        readOnly: true
-        subPath: knightcrawler.yml
+        subPath: debridio.yml
         type: configmap
       orionoid:
         defaultMode: "0664"
@@ -61,6 +59,15 @@ spec:
         objectName: prowlarr-indexers
         readOnly: true
         subPath: orionoid.yml
+        type: configmap
+      stremthru:
+        defaultMode: "0664"
+        enabled: true
+        expandObjectName: false
+        mountPath: /config/Definitions/Custom/stremthru.yml
+        objectName: prowlarr-indexers
+        readOnly: true
+        subPath: stremthru.yml
         type: configmap
       torbox:
         defaultMode: "0664"
