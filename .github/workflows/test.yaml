@@ -20,10 +20,10 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup yq
-        uses: fluxcd/pkg/actions/yq@b98e2b0975e0863f32790229ce7c9f097ed67706 # main
+        uses: fluxcd/pkg/actions/yq@e2882a16ccc484c672ed2b98aace1e91dee1d29b # main
       - name: Setup kubeconform
-        uses: fluxcd/pkg/actions/kubeconform@b98e2b0975e0863f32790229ce7c9f097ed67706 # main
+        uses: fluxcd/pkg/actions/kubeconform@e2882a16ccc484c672ed2b98aace1e91dee1d29b # main
       - name: Setup kustomize
-        uses: fluxcd/pkg/actions/kustomize@b98e2b0975e0863f32790229ce7c9f097ed67706 # main
+        uses: fluxcd/pkg/actions/kustomize@e2882a16ccc484c672ed2b98aace1e91dee1d29b # main
       - name: Validate manifests
         run: ./scripts/validate.sh
