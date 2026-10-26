@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@4559cf4e16d1e6e50bb71bf8914ac220e77c1c83 # main
+        uses: fluxcd/flux2/action@9eddb5e32671b662f5f34af33e6bb29754122c43 # main
       - name: Check for updates
         id: update
         run: |
