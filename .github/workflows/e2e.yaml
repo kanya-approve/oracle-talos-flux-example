@@ -20,7 +20,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Flux
-        uses: fluxcd/flux2/action@4559cf4e16d1e6e50bb71bf8914ac220e77c1c83 # main
+        uses: fluxcd/flux2/action@9eddb5e32671b662f5f34af33e6bb29754122c43 # main
       - name: Setup Kubernetes
         uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
         with:
